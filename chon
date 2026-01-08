@@ -1,0 +1,58 @@
+import yfinance as yf
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# 1. 下載 NKE (Nike) 過去一年的數據
+ticker = "NKE"
+df = yf.download(ticker, period="1y")
+
+# 處理新版 yfinance 的欄位格式
+df.columns = df.columns.droplevel(1)
+
+# 顯示前 5 行
+print(f"--- {ticker} 數據前 5 行 ---")
+print(df.head())
+print("\n" + "="*30 + "\n")
+
+# 2. & 3. 繪製圖表
+# 計算 20 日移動平均線 (MA20)
+df['MA20'] = df['Close'].rolling(window=20).mean()
+
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True, gridspec_kw={'height_ratios': [2, 1]})
+
+# 收市價走勢圖 (含 MA20)
+ax1.plot(df.index, df['Close'], label='Close Price', color='blue', linewidth=1.5)
+ax1.plot(df.index, df['MA20'], label='20-day MA', color='orange', linestyle='--')
+ax1.set_title(f'{ticker} Price Trend & 20-day MA (Past 1 Year)')
+ax1.set_ylabel('Price (USD)')
+ax1.legend()
+ax1.grid(True, alpha=0.3)
+
+# 成交量走勢圖
+ax2.bar(df.index, df['Volume'], color='gray', alpha=0.7)
+ax2.set_title(f'{ticker} Daily Trading Volume')
+ax2.set_ylabel('Volume')
+ax2.set_xlabel('Date')
+ax2.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+# 4. 計算關鍵指標
+max_close = df['Close'].max()
+max_date = df['Close'].idxmax().strftime('%Y-%m-%d')
+
+min_close = df['Close'].min()
+min_date = df['Close'].idxmin().strftime('%Y-%m-%d')
+
+start_price = df['Close'].iloc[0]
+end_price = df['Close'].iloc[-1]
+price_change_pct = ((end_price - start_price) / start_price) * 100
+
+avg_volume = df['Volume'].mean()
+
+print(f"--- {ticker} 統計分析結果 ---")
+print(f"一年內最高收市價: {max_close:.2f} USD (日期: {max_date})")
+print(f"一年內最低收市價: {min_close:.2f} USD (日期: {min_date})")
+print(f"年初 vs 年末價格變化: {price_change_pct:.2f}%")
+print(f"平均每日成交量: {avg_volume:,.0f} 股")
